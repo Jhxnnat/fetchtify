@@ -34,7 +34,7 @@ images = []
 i = 1
 for artist in top_artists['items']:
     print(f"\t{i}. {artist['name']}")
-    images.append(artist['images'][0])
+    images.append((artist['images'][0], artist['name']))
     i += 1
 
 print()
@@ -53,24 +53,35 @@ print()
 
 from PIL import Image, ImageDraw, ImageFont
 from io import BytesIO
+import math
 
-for img in images:
+font_massive = ImageFont.truetype("Iosevka.ttf", 80)
+font_large = ImageFont.truetype("Iosevka.ttf", 32)
+font_small = ImageFont.truetype("Iosevka.ttf", 20)
+
+_resize = 4
+gap = 10
+padding = 20
+lpadding = padding * _resize
+collage = Image.new('RGB', (700, 1400), (28, 28, 28))
+draw = ImageDraw.Draw(collage)
+draw.text((padding, padding), "Your Top Artists", fill="white", font=font_large)
+
+x = padding * 8
+y = padding * 8
+i = 1
+for img, name in images:
+    w = img['width']//_resize
+    h = img['height']//_resize
     response = requests.get(img['url'])
-    w = img['width']
-    h = img['height']
+    _cover = Image.open(BytesIO(response.content))
+    cover = _cover.resize((w, h))
 
-    # _image = Image.new('RGB', (w, h), (28, 28, 28))
-    _image = Image.open(BytesIO(response.content))
+    collage.paste(cover, (x, y))
+    draw.text((lpadding, y + (h//4)), str(i), fill="white", font=font_massive)
+    draw.text((x + w + gap, y + (h//4)), name, fill="white", font=font_large)
+    i += 1
 
-    draw = ImageDraw.Draw(_image)
+    y += padding + h + gap
 
-    font_large = ImageFont.truetype("Iosevka.ttf", 32)
-    font_small = ImageFont.truetype("Iosevka.ttf", 20)
-
-    draw.text((50, 50), "Some test", fill="white", font=font_large)
-    draw.text((50, 120), "Some text", fill="white", font=font_small)
-    draw.text((50, 160), "1234...", fill="white", font=font_small)
-
-    _image.save('test.png')
-
-    break
+collage.save('collage.png')
