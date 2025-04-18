@@ -1,5 +1,8 @@
-# Statify
-Simple Website for take a look of your spotify stats
+# Fetchtify
+Simple Cli for looking your spotify favorite artist and songs.
+Also generates pretty images.
 
 # Dependencies:
-https://flask.palletsprojects.com/en/stable/
+https://github.com/spotipy-dev/spotipy
+https://github.com/python-pillow/Pillow
+https://github.com/erikrose/blessings
