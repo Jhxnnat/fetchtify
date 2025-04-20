@@ -19,28 +19,31 @@ class Stats():
             redirect_uri=SPOTIFY_REDIRECT_URI,
             scope=self.scope
         ))
+        self.top_artists = None
+        self.top_tracks = None
 
     def get_artist(self):
-        top_artists = self.sp.current_user_top_artists(
+        self.top_artists = self.sp.current_user_top_artists(
             limit=self.limit, time_range=self.term
         )
         data = []
-        for artist in top_artists['items']:
+        for artist in self.top_artists['items']:
             data.append((artist['images'][0], artist['name'], ""))
         return data
 
     def get_tracks(self):
-        top_tracks = self.sp.current_user_top_tracks(
+        self.top_tracks = self.sp.current_user_top_tracks(
             limit=self.limit, time_range=self.term
         )
 
         data = []
-        for track in top_tracks['items']:
-            urls = ""
+        for track in self.top_tracks['items']:
+            urls = track['album']['images'][0]
             artists = track['album']['artists']
             names = ""
             for artist in artists:
                 names += f"{artist['name']} "
             data.append((urls, track['name'], names))
+            break
         return data
 
