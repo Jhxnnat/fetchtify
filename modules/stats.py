@@ -44,6 +44,5 @@ class Stats():
             for artist in artists:
                 names += f"{artist['name']} "
             data.append((urls, track['name'], names))
-            break
         return data
 
