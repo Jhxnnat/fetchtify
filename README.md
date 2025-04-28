@@ -1,6 +1,7 @@
 # Fetchtify
 neofetch-like tool for spotify.
 
+:exclamation:  not finished.
+
 # Dependencies:
-- https://github.com/spotipy-dev/spotipy
-- https://github.com/erikrose/blessings
+- probably none.

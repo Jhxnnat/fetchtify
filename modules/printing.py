@@ -1,9 +1,20 @@
-from blessings import Terminal
+class Tcol():
+    def __init__(self):
+        self.normal = '\033[0m'
+        self.bold = '\033[1m'
+        self.underline = '\033[4m'
+        self.red = '\033[91m'
+        self.orange = '\033[95m'
+        self.yellow = '\033[93m'
+        self.green = '\033[92m'
+        self.blue = '\033[94m'
+        self.cyan = '\033[96m'
+        self.purple = '\33[35m'
 
 class Printing():
     def __init__(self, data_tracks, data_artist, config=None):
         self.config = config
-        self.term = Terminal()
+        self.term = Tcol()
         self.data_tracks = data_tracks
         self.data_artist = data_artist
         self.ascii = config.ascii
@@ -34,7 +45,7 @@ class Printing():
 
         info += '\n'
         # adding palette (nerd font required)
-        info += f'󰝤 {t.red}󰝤 {t.orange}󰝤 {t.yellow}󰝤 {t.green}󰝤 {t.blue}󰝤 {t.cian}󰝤 {t.purple}{t.normal}'
+        info += f'󰝤 {t.red}󰝤 {t.orange}󰝤 {t.yellow}󰝤 {t.green}󰝤 {t.blue}󰝤 {t.cyan}󰝤 {t.purple}{t.normal}'
         return info
 
     def show(self):
@@ -56,9 +67,8 @@ class Printing():
                 info.append(text)
 
         ascii_lines_len = len(ascii_lines_list)
+        print()
         for i in range(ascii_lines_len):
             print(ascii_lines_list[i] + ' ' + info[i])
-
-    def print(self, text):
-        print(text.format(t=self.term))
+        print()
 

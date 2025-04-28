@@ -1,0 +1,141 @@
+import sys, webbrowser, requests, threading, time
+import http.server
+import socketserver
+import urllib.parse
+import base64
+
+auth_code = None
+
+class Handler(http.server.SimpleHTTPRequestHandler):
+    def do_GET(self):
+        global auth_code
+        if self.path.startswith('/callback'):
+            query = urllib.parse.urlparse(self.path).query
+            params = urllib.parse.parse_qs(query)
+            auth_code = params.get('code', [None])[0]
+            self.path = 'html/callback.html'
+            
+            #TODO: cant run script servetal time because server keeps running for some time
+            threading.Thread(target=self.server.shutdown, daemon=True).start()
+        else:
+            self.send_error(404)
+        return http.server.SimpleHTTPRequestHandler.do_GET(self)
+
+class Spoty():
+    def __init__(self, scope, term, client_id, client_secret, redirect_uri):
+        self.scope = scope
+        self.term = term
+        self.client_id=client_id
+        self.client_secret=client_secret
+        self.redirect_uri=redirect_uri
+        
+        self.auth_url = ""
+        self.auth_code = None
+        self.auth_token = None
+        self.server = None
+        self.thread = None
+
+        self.limit = 5
+        self.term = 'long_term'
+
+    def make_auth_url(self):
+        auth_url = f'https://accounts.spotify.com/authorize?client_id={self.client_id}&response_type=code&redirect_uri={self.redirect_uri}&scope={self.scope}'
+        return auth_url
+    
+    def make_server(self, port):
+        handler = Handler
+        self.server = socketserver.TCPServer(("", port), handler)
+        self.thread = threading.Thread(target=self.server.serve_forever)
+        self.thread.daemon = True
+        try:
+            self.thread.start()
+        except KeyboardInterrupt:
+            self.server.shutdown()
+            sys.exit(1)
+
+        time.sleep(2) # wait for the server, just in case
+
+    def end_server(self):
+        threading.Thread(target=self.server.shutdown, daemon=True).start()
+
+    def auth(self):
+        self.make_server(5000)
+
+        auth_url = self.make_auth_url()
+        print("Opening browser page for you to log in")
+        print("if the url does not open automatically you can visit this url:")
+        print(auth_url)
+        webbrowser.open(auth_url)
+
+        while auth_code == None:
+            pass
+
+        print("auth_code: ", auth_code)
+        self.access_token = self.get_access_token()
+
+    # TODO Save token on a database to avoid always opening browser when running
+    def get_access_token(self):
+        auth_str = f"{self.client_id}:{self.client_secret}"
+        auth_bytes = auth_str.encode('utf-8')
+        auth_base64 = base64.b64encode(auth_bytes).decode('utf-8')
+
+        auth_url = 'https://accounts.spotify.com/api/token'
+        headers = {
+            'Authorization': 'Basic ' + auth_base64,
+            'Content-Type': 'application/x-www-form-urlencoded'
+        }
+        data = {
+            'grant_type': 'authorization_code',
+            'code': auth_code,
+            'redirect_uri': self.redirect_uri
+        }
+
+        response = requests.post(auth_url, headers=headers, data=data)
+        tokens = response.json()
+        access_token = tokens['access_token']
+        return access_token
+
+    def current_user_top_artists(self, access_token, time_range = 'long_term', limit = 5):
+        # endpoint = 'https://api.spotify.com/v1/me/albums'
+        # headers = {'Authorization': f'Bearer {access_token}'}
+        # response = requests.get(endpoint, headers=headers)
+        headers = {'Authorization': f'Bearer {access_token}'}
+        params = {'time_range': time_range, 'limit': limit }
+        response = requests.get('https://api.spotify.com/v1/me/top/tracks', headers=headers, params=params)
+        return response.json()
+
+    def current_user_top_tracks(self, access_token, time_range = 'long_term', limit = 5):
+        headers = {'Authorization': f'Bearer {access_token}'}
+        params = {'time_range': time_range, 'limit': limit }
+        response = requests.get('https://api.spotify.com/v1/me/top/artists', headers=headers, params=params)
+        return response.json()
+    
+    def get_artist(self):
+        top_artists = self.current_user_top_artists(
+            access_token=self.access_token,
+            limit=self.limit, time_range=self.term)
+
+        print(top_artists)
+        data = []
+        # for artist in top_artists['items']:
+        #     data.append((artist['images'][0], artist['name'], ""))
+        return data
+
+    def get_tracks(self):
+        top_tracks = self.current_user_top_tracks(
+            access_token=self.access_token,
+            limit=self.limit, time_range=self.term)
+
+        print(top_tracks)
+
+        data = []
+        # for track in top_tracks['items']:
+        #     urls = track['album']['images'][0]
+        #     artists = track['album']['artists']
+        #     names = ""
+        #     for artist in artists:
+        #         names += f"{artist['name']} "
+        #     data.append((urls, track['name'], names))
+        return data
+
+

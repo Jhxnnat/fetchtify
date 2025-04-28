@@ -1,3 +1,5 @@
+### Not Used Anymore (requires spotipy as dependencie) ###
+
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 

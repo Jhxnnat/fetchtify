@@ -2,7 +2,9 @@ import os, sys, argparse, importlib
 from dotenv import load_dotenv, dotenv_values
 from modules.stats import Stats
 from modules.printing import Printing
+from modules.spoty import Spoty
 
+#TODO: config file documentation
 class Config():
     def __init__(self):
         self.ascii = ""
@@ -11,6 +13,7 @@ class Config():
         self.defaults()
 
     def defaults(self):
+        self.env_file = None
         self.title = "Fetchtify"
         self.ascii = """⠀⠀⠀⠀⠀⠀⠀⢀⣤⠖⠂⠉⠉⠉⠀⠒⠤⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 ⠀⠀⠀⠀⢀⠀⣶⡟⢀⣴⣶⣿⣾⣶⣶⣄⡀⠈⠑⢤⡀⠀⠀⠀⠀⠀⠀⠀⠀
@@ -51,9 +54,10 @@ class Config():
         parser.add_argument('-e', '--env', help='provide the .env file with spotify credentials (SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET)', required=True)
 
         args = parser.parse_args()
-        self.env_file = args.env
-
         self.title = args.title
+        self.env_file = args.env
+        if args.no_ascii == True:
+            self.ascii = ""
 
         if args.config != None:
             config = self.read_config_file(args.config)
@@ -91,17 +95,18 @@ def main(config, env_file):
         print("ERROR: Invalid Environment Variables")
         os._exit(1)
 
-    stats = Stats(SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, SPOTIFY_REDIRECT_URI)
-    tracks = stats.get_tracks()
-    artist = stats.get_artist()
+    scope='user-top-read user-read-recently-played user-library-read'
+    term = "long_term"
+    sp = Spoty(scope, term, SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, SPOTIFY_REDIRECT_URI)
+    sp.auth()
+    tracks = sp.get_tracks()
+    artist = sp.get_artist()
+    # p = Printing(data_tracks=tracks, data_artist=artist, config=config)
+    # p.show()
 
-    p = Printing(data_tracks=tracks, data_artist=artist, config=config)
-    p.show()
 
 if __name__ == '__main__':
     config = Config()
     config.get_config()
     main(config, config.env_file)
 
-#TODO: config file documentation
-#TODO: check if colors sequences are different on windows, if not, maybe we can drop blessings
