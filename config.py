@@ -1,4 +1,4 @@
-title = "no way"
+title = "Música!"
 ascii="""                          ,     
    _,,._              |  0'     
  ,'     `.__,--.     0'         

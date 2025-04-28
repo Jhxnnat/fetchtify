@@ -1,6 +1,5 @@
 # Fetchtify
-Simple Cli for looking your spotify favorite artist and songs.
-Also generates pretty images.
+neofetch-like tool for spotify.
 
 # Dependencies:
 - https://github.com/spotipy-dev/spotipy
