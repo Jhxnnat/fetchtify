@@ -6,9 +6,9 @@ class Printing():
         self.term = Terminal()
         self.data_tracks = data_tracks
         self.data_artist = data_artist
-        self.header = '--- {t.bold}Fetchtify{t.normal} ---'.format(t=self.term)
-        self.logo = config.ascii
+        self.ascii = config.ascii
         self.title = config.title
+        self.header = '--- {t.bold}{self.title}{t.normal} ---'.format(t=self.term, self=self)
 
     # format the text that is going to be printed with the information, palette and so on
     def make_text_info(self): 
@@ -40,20 +40,24 @@ class Printing():
     def show(self):
         info = self.make_text_info().split('\n')
         info_len = len(info)
-        lines_list = self.logo.split('\n')
-        logo_lines_len = len(lines_list)
-        _list = lines_list
-        if info_len > logo_lines_len:
-            _list = info
+        ascii_lines_list = self.ascii.split('\n')
+        ascii_lines_len = len(ascii_lines_list)
+        if info_len > ascii_lines_len:
+            text = ""
+            for i in range(len(ascii_lines_list[0])):
+                text += " "
+            for i in range(info_len - ascii_lines_len):
+                ascii_lines_list.append(text)
+        elif info_len < ascii_lines_len:
+            text = ""
+            for i in ascii_lines_list[0]:
+                text += " "
+            for i in range(ascii_lines_len - info_len):
+                info.append(text)
 
-        t = self.term
-        for i, logo in enumerate(_list):
-            current_line  = ""
-            if (i < logo_lines_len):
-                current_line += lines_list[i] + '\t'
-            if (i < info_len):
-                current_line += info[i]
-            print(current_line)
+        ascii_lines_len = len(ascii_lines_list)
+        for i in range(ascii_lines_len):
+            print(ascii_lines_list[i] + ' ' + info[i])
 
     def print(self, text):
         print(text.format(t=self.term))

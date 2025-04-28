@@ -1,5 +1,5 @@
-import os
-import sys
+import os, sys, argparse, importlib
+from dotenv import load_dotenv, dotenv_values
 from modules.stats import Stats
 from modules.printing import Printing
 
@@ -7,6 +7,7 @@ class Config():
     def __init__(self):
         self.ascii = ""
         self.title = ""
+        self.env_file = None
         self.defaults()
 
     def defaults(self):
@@ -29,7 +30,7 @@ class Config():
 ⠀⠀⠀⠘⠿⣿⣿⣽⣽⣷⣿⣿⣿⣿⣿⡶⠻⣿⣿⣿⣿⣿⣿⣿⣿⣿⠟⠁⠀
 ⠀⠀⠀⠀⠀⠀⠉⠙⠿⢿⣿⣿⣿⣿⠟⠁⠀⠘⠿⣿⣿⣿⠿⠟⠉⠀⠀⠀⠀"""
 
-    def usage():
+    def usage(self):
         helpt = """
         Usage: fetchtify [ -h | -c config_file | -d | -n | -t title ]
           -h: show this message
@@ -41,31 +42,56 @@ class Config():
         print(helpt)
         os._exit(1)
 
-    def get_config(self, argv):
-        if len(argv) == 0:
-            return
-        opts = ['-h', '--help', '-c', '-d', '-n']
-        for i in argv:
-            if i in opts:
-                if i == '-h' or i == '--help':
-                    usage()
-                elif i == '-c':
-                    pass
-                elif i == '-d':
-                    self.defaults()
-                    return
-                elif i == '-n':
-                    self.ascii = ""
-                elif i == '-t':
-                    # check next for title or error
-                    # step once in loop
-                    pass
-            else:
-                print("unknow option: ", i)
-                usage()
+    def get_config(self):
+        parser = argparse.ArgumentParser(prog='fetchtify', description='neofetch-like tool for spotify')
+        parser.add_argument('-c', '--config', help='provide a config file path')
+        parser.add_argument('-d', '--default', action='store_true', help='use the default configuration (overrides other options)')
+        parser.add_argument('-n', '--no_ascii', action='store_true', help='do not show ascii logo')
+        parser.add_argument('-t', '--title', default="Fetchtify", help='provide a title')
+        parser.add_argument('-e', '--env', help='provide the .env file with spotify credentials (SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET)', required=True)
 
-def main(config):
-    stats = Stats()
+        args = parser.parse_args()
+        self.env_file = args.env
+
+        self.title = args.title
+
+        if args.config != None:
+            config = self.read_config_file(args.config)
+            if config['title'] != None:
+                self.title = config['title']
+            if config['ascii'] != None:
+                self.ascii = config['ascii']
+
+        if args.default:
+            self.defaults()
+
+    def read_config_file(self, config_path):
+        spec = importlib.util.spec_from_file_location("config_module", config_path)
+        config_module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(config_module)
+        
+        variables = {
+            name: value 
+            for name, value in vars(config_module).items() 
+            if not name.startswith("__")
+        }
+        return variables
+
+def main(config, env_file):
+    if not os.path.isfile(env_file):
+        print("ERROR: Invalid Environment File Path")
+        os._exit(1)
+
+    load_dotenv(env_file)
+    SPOTIFY_CLIENT_ID = os.getenv('SPOTIFY_CLIENT_ID')
+    SPOTIFY_CLIENT_SECRET = os.getenv('SPOTIFY_CLIENT_SECRET')
+    SPOTIFY_REDIRECT_URI = 'http://127.0.0.1:5000/callback/'
+    
+    if SPOTIFY_CLIENT_ID == None or SPOTIFY_CLIENT_SECRET == None:
+        print("ERROR: Invalid Environment Variables")
+        os._exit(1)
+
+    stats = Stats(SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, SPOTIFY_REDIRECT_URI)
     tracks = stats.get_tracks()
     artist = stats.get_artist()
 
@@ -73,11 +99,9 @@ def main(config):
     p.show()
 
 if __name__ == '__main__':
-    args = sys.argv
-    args.pop(0)
     config = Config()
-    config.get_config(args)
-    main(config)
+    config.get_config()
+    main(config, config.env_file)
 
-#TODO: config file?
+#TODO: config file documentation
 #TODO: check if colors sequences are different on windows, if not, maybe we can drop blessings

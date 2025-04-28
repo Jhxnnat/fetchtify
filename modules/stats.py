@@ -1,15 +1,8 @@
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
-import os
-from dotenv import load_dotenv, dotenv_values
 
 class Stats():
-    def __init__(self):
-        load_dotenv()
-        SPOTIFY_CLIENT_ID = os.getenv('SPOTIFY_CLIENT_ID')
-        SPOTIFY_CLIENT_SECRET = os.getenv('SPOTIFY_CLIENT_SECRET')
-        SPOTIFY_REDIRECT_URI = 'http://127.0.0.1:5000/callback/'
-
+    def __init__(self, SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, SPOTIFY_REDIRECT_URI):
         self.scope='user-top-read user-read-recently-played user-library-read'
         self.term = "long_term"
         self.limit = 5
