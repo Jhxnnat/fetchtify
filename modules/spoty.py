@@ -16,7 +16,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             self.path = 'html/callback.html'
             
             #TODO: cant run script servetal time because server keeps running for some time
-            threading.Thread(target=self.server.shutdown, daemon=True).start()
+            # threading.Thread(target=self.server.shutdown).start()
+            # self.server.shutdown()
         else:
             self.send_error(404)
         return http.server.SimpleHTTPRequestHandler.do_GET(self)
@@ -44,6 +45,7 @@ class Spoty():
     
     def make_server(self, port):
         handler = Handler
+        socketserver.TCPServer.allow_reuse_address = True
         self.server = socketserver.TCPServer(("", port), handler)
         self.thread = threading.Thread(target=self.server.serve_forever)
         self.thread.daemon = True
@@ -53,7 +55,7 @@ class Spoty():
             self.server.shutdown()
             sys.exit(1)
 
-        time.sleep(2) # wait for the server, just in case
+        # time.sleep(2) # wait for the server, just in case
 
     def end_server(self):
         threading.Thread(target=self.server.shutdown, daemon=True).start()
@@ -62,16 +64,17 @@ class Spoty():
         self.make_server(5000)
 
         auth_url = self.make_auth_url()
-        print("Opening browser page for you to log in")
-        print("if the url does not open automatically you can visit this url:")
-        print(auth_url)
+        # print("Opening browser page for you to log in")
+        # print("if the url does not open automatically you can visit this url:")
+        # print(auth_url)
         webbrowser.open(auth_url)
 
         while auth_code == None:
             pass
 
-        print("auth_code: ", auth_code)
+        # print("auth_code: ", auth_code)
         self.access_token = self.get_access_token()
+        self.end_server()
 
     # TODO Save token on a database to avoid always opening browser when running
     def get_access_token(self):
@@ -96,18 +99,15 @@ class Spoty():
         return access_token
 
     def current_user_top_artists(self, access_token, time_range = 'long_term', limit = 5):
-        # endpoint = 'https://api.spotify.com/v1/me/albums'
-        # headers = {'Authorization': f'Bearer {access_token}'}
-        # response = requests.get(endpoint, headers=headers)
         headers = {'Authorization': f'Bearer {access_token}'}
         params = {'time_range': time_range, 'limit': limit }
-        response = requests.get('https://api.spotify.com/v1/me/top/tracks', headers=headers, params=params)
+        response = requests.get('https://api.spotify.com/v1/me/top/artists', headers=headers, params=params)
         return response.json()
 
     def current_user_top_tracks(self, access_token, time_range = 'long_term', limit = 5):
         headers = {'Authorization': f'Bearer {access_token}'}
         params = {'time_range': time_range, 'limit': limit }
-        response = requests.get('https://api.spotify.com/v1/me/top/artists', headers=headers, params=params)
+        response = requests.get('https://api.spotify.com/v1/me/top/tracks', headers=headers, params=params)
         return response.json()
     
     def get_artist(self):
@@ -115,10 +115,10 @@ class Spoty():
             access_token=self.access_token,
             limit=self.limit, time_range=self.term)
 
-        print(top_artists)
+        # print(top_artists)
         data = []
-        # for artist in top_artists['items']:
-        #     data.append((artist['images'][0], artist['name'], ""))
+        for artist in top_artists['items']:
+            data.append((artist['images'][0], artist['name'], ""))
         return data
 
     def get_tracks(self):
@@ -126,16 +126,16 @@ class Spoty():
             access_token=self.access_token,
             limit=self.limit, time_range=self.term)
 
-        print(top_tracks)
+        # print(top_tracks)
 
         data = []
-        # for track in top_tracks['items']:
-        #     urls = track['album']['images'][0]
-        #     artists = track['album']['artists']
-        #     names = ""
-        #     for artist in artists:
-        #         names += f"{artist['name']} "
-        #     data.append((urls, track['name'], names))
+        for track in top_tracks['items']:
+            urls = track['album']['images'][0]
+            artists = track['album']['artists']
+            names = ""
+            for artist in artists:
+                names += f"{artist['name']} "
+            data.append((urls, track['name'], names))
         return data
 
 
