@@ -5,9 +5,8 @@ neofetch-like tool for spotify.
 - probably none.
 
 # Usage:
+```
 fetchtify [-h] -c CONFIG [-d] [-n] [-t TITLE]
-
-neofetch-like tool for spotify
 
 options:
   -h, --help           show this help message and exit
@@ -15,6 +14,7 @@ options:
   -d, --default        use the default configuration (overrides other options)
   -n, --no_ascii       do not show ascii logo
   -t, --title TITLE    provide a title
+```
 
 you should provide a python file with SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET, you can get these from: https://developer.spotify.com/dashboard
 creating a new app with *WebAPI* as the scope (set the callback field to: http://localhost:5000/callback/ or http://127.0.0.1:5000/callback/).
