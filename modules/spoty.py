@@ -3,10 +3,13 @@ import http.server
 import socketserver
 import urllib.parse
 import base64
+import datetime
 
 auth_code = None
 
 class Handler(http.server.SimpleHTTPRequestHandler):
+    def log_message(self, format, *args):
+        pass
     def do_GET(self):
         global auth_code
         if self.path.startswith('/callback'):
@@ -14,10 +17,6 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             params = urllib.parse.parse_qs(query)
             auth_code = params.get('code', [None])[0]
             self.path = 'html/callback.html'
-            
-            #TODO: cant run script servetal time because server keeps running for some time
-            # threading.Thread(target=self.server.shutdown).start()
-            # self.server.shutdown()
         else:
             self.send_error(404)
         return http.server.SimpleHTTPRequestHandler.do_GET(self)
@@ -35,6 +34,9 @@ class Spoty():
         self.auth_token = None
         self.server = None
         self.thread = None
+
+        self.access_token = None
+        self.refresh_token = None
 
         self.limit = 5
         self.term = 'long_term'
@@ -55,28 +57,36 @@ class Spoty():
             self.server.shutdown()
             sys.exit(1)
 
-        # time.sleep(2) # wait for the server, just in case
-
     def end_server(self):
         threading.Thread(target=self.server.shutdown, daemon=True).start()
 
+    def is_access_token_expired(self):
+        return false
+
     def auth(self):
+        try:
+            with open(".cache.access_token.txt", "r") as f:
+                l = f.readline()
+                self.access_token = l
+            return
+        except Exception as e:
+            pass
+
         self.make_server(5000)
 
         auth_url = self.make_auth_url()
-        # print("Opening browser page for you to log in")
-        # print("if the url does not open automatically you can visit this url:")
-        # print(auth_url)
         webbrowser.open(auth_url)
 
+        #FIXME: whats going on with "[2] Sandbox: CanCreateUserNamespace() clone() failure: EPERM"?
         while auth_code == None:
             pass
 
-        # print("auth_code: ", auth_code)
         self.access_token = self.get_access_token()
         self.end_server()
 
-    # TODO Save token on a database to avoid always opening browser when running
+        with open(".cache.access_token.txt", "w") as f:
+            f.write(f"{self.access_token}")
+
     def get_access_token(self):
         auth_str = f"{self.client_id}:{self.client_secret}"
         auth_bytes = auth_str.encode('utf-8')
@@ -97,7 +107,7 @@ class Spoty():
         tokens = response.json()
         access_token = tokens['access_token']
         return access_token
-
+    
     def current_user_top_artists(self, access_token, time_range = 'long_term', limit = 5):
         headers = {'Authorization': f'Bearer {access_token}'}
         params = {'time_range': time_range, 'limit': limit }
@@ -127,7 +137,6 @@ class Spoty():
             limit=self.limit, time_range=self.term)
 
         # print(top_tracks)
-
         data = []
         for track in top_tracks['items']:
             urls = track['album']['images'][0]

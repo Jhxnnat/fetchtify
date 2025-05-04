@@ -5,3 +5,4 @@ neofetch-like tool for spotify.
 
 # Dependencies:
 - probably none.
+
