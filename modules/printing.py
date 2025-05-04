@@ -34,6 +34,8 @@ class Printing():
             info += '\n'
 
         info += '\n'
+        info += f'--- {t.bold}Most Listened Artist{t.normal} ---\n'
+        info += '\n'
 
         for item in self.data_artist:
             title = item[1]
