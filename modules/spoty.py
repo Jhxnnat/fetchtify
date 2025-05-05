@@ -66,9 +66,11 @@ class Spoty():
     def auth(self):
         try:
             with open(".cache.access_token.txt", "r") as f:
-                l = f.readline()
-                self.access_token = l
-            return
+                l = f.readline().strip()
+                d = f.readline().strip()
+                if int(d) + 3599 > int(datetime.datetime.now().strftime("%s")):
+                    self.access_token = l
+                    return
         except Exception as e:
             pass
 
@@ -84,8 +86,11 @@ class Spoty():
         self.access_token = self.get_access_token()
         self.end_server()
 
+        d = datetime.datetime.now().strftime("%s")
         with open(".cache.access_token.txt", "w") as f:
             f.write(f"{self.access_token}")
+            f.write("\n")
+            f.write(f"{d}")
 
     def get_access_token(self):
         auth_str = f"{self.client_id}:{self.client_secret}"
@@ -136,7 +141,6 @@ class Spoty():
             access_token=self.access_token,
             limit=self.limit, time_range=self.term)
 
-        # print(top_tracks)
         data = []
         for track in top_tracks['items']:
             urls = track['album']['images'][0]

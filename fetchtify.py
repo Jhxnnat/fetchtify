@@ -64,9 +64,10 @@ class Config():
                 sys.exit(1)
             self.SPOTIFY_CLIENT_ID = config['SPOTIFY_CLIENT_ID']
             self.SPOTIFY_CLIENT_SECRET = config['SPOTIFY_CLIENT_SECRET']
-            if config['title'] != None:
+
+            if 'title' in config:
                 self.title = config['title']
-            if config['ascii'] != None:
+            if 'ascii' in config:
                 self.ascii = config['ascii']
 
         if args.default:
